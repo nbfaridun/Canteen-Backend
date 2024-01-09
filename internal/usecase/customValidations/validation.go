@@ -36,6 +36,18 @@ func CheckFieldContentEmpty(fieldContent, fieldName string) *customErr.CustomErr
 	return nil
 }
 
+func ValidateSecondPass(fieldContent, secondFieldContent, fieldName string) *customErr.CustomError {
+	if fieldContent != secondFieldContent {
+		return &customErr.CustomError{
+			LogError:        customErr.FieldContentNotValid(fieldName),
+			FrontendMessage: customErr.FieldContentNotValid(fieldName).Error(),
+			StatusCode:      http.StatusBadRequest,
+		}
+	}
+
+	return nil
+}
+
 func ValidateUsername(username string) *customErr.CustomError {
 	if err := CheckFieldContentLength(username, "username", 4, 20); err != nil {
 		return err
