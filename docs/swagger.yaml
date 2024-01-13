@@ -1,0 +1,788 @@
+definitions:
+  models.Token:
+    properties:
+      access_token:
+        type: string
+      refresh_token:
+        type: string
+    type: object
+  request.CreateClient:
+    properties:
+      age:
+        maximum: 100
+        minimum: 1
+        type: integer
+      balance:
+        type: number
+      client_category_id:
+        type: integer
+      email:
+        type: string
+      first_name:
+        maxLength: 20
+        minLength: 1
+        type: string
+      gender:
+        type: string
+      last_name:
+        maxLength: 20
+        minLength: 1
+        type: string
+    required:
+    - age
+    - client_category_id
+    - email
+    - first_name
+    - gender
+    - last_name
+    type: object
+  request.CreateClientCategory:
+    properties:
+      name:
+        maxLength: 20
+        minLength: 1
+        type: string
+    required:
+    - name
+    type: object
+  request.CreateUser:
+    properties:
+      email:
+        type: string
+      first_name:
+        maxLength: 20
+        minLength: 1
+        type: string
+      last_name:
+        maxLength: 20
+        minLength: 1
+        type: string
+      password:
+        maxLength: 20
+        minLength: 8
+        type: string
+      user_role_id:
+        type: integer
+      username:
+        maxLength: 20
+        minLength: 4
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    - user_role_id
+    - username
+    type: object
+  request.ModifyBalance:
+    properties:
+      difference:
+        type: number
+    required:
+    - difference
+    type: object
+  request.RefreshToken:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  request.SignIn:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  request.UpdateClient:
+    properties:
+      age:
+        maximum: 100
+        minimum: 1
+        type: integer
+      balance:
+        type: number
+      client_category_id:
+        type: integer
+      email:
+        type: string
+      first_name:
+        maxLength: 20
+        minLength: 1
+        type: string
+      gender:
+        type: string
+      is_active:
+        type: boolean
+      last_name:
+        maxLength: 20
+        minLength: 1
+        type: string
+    type: object
+  request.UpdateClientCategory:
+    properties:
+      is_active:
+        type: boolean
+      name:
+        maxLength: 20
+        minLength: 1
+        type: string
+    type: object
+  request.UpdateUser:
+    properties:
+      email:
+        type: string
+      first_name:
+        maxLength: 20
+        minLength: 1
+        type: string
+      is_active:
+        type: boolean
+      last_name:
+        maxLength: 20
+        minLength: 1
+        type: string
+      password:
+        maxLength: 20
+        minLength: 8
+        type: string
+      user_role_id:
+        type: integer
+      username:
+        maxLength: 20
+        minLength: 4
+        type: string
+    type: object
+  response.GetClient:
+    properties:
+      age:
+        type: integer
+      balance:
+        type: number
+      client_category_id:
+        type: integer
+      email:
+        type: string
+      first_name:
+        type: string
+      gender:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      last_name:
+        type: string
+    type: object
+  response.GetClientCategory:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  response.GetUser:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      last_name:
+        type: string
+      user_role:
+        type: integer
+      username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  title: Canteen Management System API
+  version: "1.0"
+paths:
+  /api/auth/refresh-token:
+    post:
+      consumes:
+      - application/json
+      description: Refresh access and refresh tokens with the provided refresh token
+      parameters:
+      - description: Refresh token object
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/request.RefreshToken'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: '#/definitions/models.Token'
+        "400":
+          description: Invalid input JSON
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Refresh access and refresh tokens
+      tags:
+      - auth
+  /api/auth/sign-in:
+    post:
+      consumes:
+      - application/json
+      description: Sign in a user with the provided JSON input
+      parameters:
+      - description: User sign in object
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/request.SignIn'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: '#/definitions/models.Token'
+        "400":
+          description: Invalid input JSON
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Sign in a user
+      tags:
+      - auth
+  /api/auth/sign-out:
+    post:
+      consumes:
+      - application/json
+      description: Sign out a user with the provided refresh token
+      parameters:
+      - description: Refresh token object
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/request.RefreshToken'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User signed out
+          schema:
+            type: string
+        "400":
+          description: Invalid input JSON
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+      summary: Sign out a user
+      tags:
+      - auth
+  /api/client-categories:
+    get:
+      consumes:
+      - application/json
+      description: Get all client categories available
+      operationId: get-all-client-categories
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            items:
+              $ref: '#/definitions/response.GetClientCategory'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get all client categories
+      tags:
+      - client_categories
+    post:
+      consumes:
+      - application/json
+      description: Create a new client category with the provided JSON input
+      parameters:
+      - description: Client category object to be created
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateClientCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a new client category
+      tags:
+      - client_categories
+  /api/client-categories/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a client category based on ID
+      operationId: delete-client-category
+      parameters:
+      - description: Client category ID
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete a client category by ID
+      tags:
+      - client_categories
+    get:
+      consumes:
+      - application/json
+      description: Get a client category based on ID
+      operationId: get-client-category-by-id
+      parameters:
+      - description: Client category ID
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: '#/definitions/response.GetClientCategory'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get a client category by ID
+      tags:
+      - client_categories
+    put:
+      consumes:
+      - application/json
+      description: Update the existing client category with the provided JSON input
+      parameters:
+      - description: Client category ID
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Client category object to be updated
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateClientCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Update the existing client category
+      tags:
+      - client_categories
+  /api/clients:
+    get:
+      consumes:
+      - application/json
+      description: Get all clients available
+      operationId: get-all-clients
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            items:
+              $ref: '#/definitions/response.GetClient'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get all clients
+      tags:
+      - clients
+    post:
+      consumes:
+      - application/json
+      description: Create a new client with the provided JSON input
+      parameters:
+      - description: Client object to be created
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateClient'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a new client
+      tags:
+      - clients
+  /api/clients/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a client based on ID
+      operationId: delete-client
+      parameters:
+      - description: Client ID
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete a client by ID
+      tags:
+      - clients
+    get:
+      consumes:
+      - application/json
+      description: Get a client based on ID
+      operationId: get-client-by-id
+      parameters:
+      - description: Client ID
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: '#/definitions/response.GetClient'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get a client by ID
+      tags:
+      - clients
+    put:
+      consumes:
+      - application/json
+      description: Update the existing client with the provided JSON input
+      parameters:
+      - description: Client ID
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Client object to be updated
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateClient'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Update the existing client
+      tags:
+      - clients
+  /api/clients/{id}/modify-balance:
+    put:
+      consumes:
+      - application/json
+      description: Modify the balance of a client based on ID and provided JSON input
+      parameters:
+      - description: Client ID
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Balance modification object
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/request.ModifyBalance'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Modify the balance of a client by ID
+      tags:
+      - clients
+  /api/users:
+    get:
+      consumes:
+      - application/json
+      description: Get all users available
+      operationId: get-all-users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            items:
+              $ref: '#/definitions/response.GetUser'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get all users
+      tags:
+      - users
+    post:
+      consumes:
+      - application/json
+      description: Create a new user with the provided JSON input
+      parameters:
+      - description: User object to be created
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a new user
+      tags:
+      - users
+  /api/users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a user based on ID
+      operationId: delete-user
+      parameters:
+      - description: User ID
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete a user by ID
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      description: Get a user based on ID
+      operationId: get-user-by-id
+      parameters:
+      - description: User ID
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: '#/definitions/response.GetUser'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get a user by ID
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Update the existing user with the provided JSON input
+      parameters:
+      - description: User ID
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: User object to be updated
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Update the existing user
+      tags:
+      - users
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
