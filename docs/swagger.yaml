@@ -45,6 +45,39 @@ definitions:
     required:
     - name
     type: object
+  request.CreateIngredient:
+    properties:
+      ingredient_category_id:
+        type: integer
+      name:
+        maxLength: 50
+        minLength: 1
+        type: string
+      unit:
+        type: string
+    required:
+    - ingredient_category_id
+    - name
+    - unit
+    type: object
+  request.CreateIngredientCategory:
+    properties:
+      name:
+        maxLength: 50
+        minLength: 1
+        type: string
+    required:
+    - name
+    type: object
+  request.CreateSupplier:
+    properties:
+      name:
+        maxLength: 50
+        minLength: 1
+        type: string
+    required:
+    - name
+    type: object
   request.CreateUser:
     properties:
       email:
@@ -133,6 +166,41 @@ definitions:
         minLength: 1
         type: string
     type: object
+  request.UpdateIngredient:
+    properties:
+      expiration_date:
+        type: string
+      ingredient_category_id:
+        type: integer
+      lack_limit:
+        type: number
+      name:
+        maxLength: 50
+        minLength: 1
+        type: string
+      purchase_date:
+        type: string
+      quantity:
+        type: number
+      unit:
+        type: string
+      unit_price:
+        type: number
+    type: object
+  request.UpdateIngredientCategory:
+    properties:
+      name:
+        maxLength: 50
+        minLength: 1
+        type: string
+    type: object
+  request.UpdateSupplier:
+    properties:
+      name:
+        maxLength: 50
+        minLength: 1
+        type: string
+    type: object
   request.UpdateUser:
     properties:
       email:
@@ -180,6 +248,41 @@ definitions:
         type: string
     type: object
   response.GetClientCategory:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  response.GetIngredient:
+    properties:
+      expiration_date:
+        type: string
+      id:
+        type: integer
+      ingredient_category_id:
+        type: integer
+      lack_limit:
+        type: number
+      name:
+        type: string
+      purchase_date:
+        type: string
+      quantity:
+        type: number
+      unit:
+        type: string
+      unit_price:
+        type: number
+    type: object
+  response.GetIngredientCategory:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  response.GetSupplier:
     properties:
       id:
         type: integer
@@ -236,6 +339,14 @@ paths:
           description: Unauthorized
           schema:
             type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
       summary: Refresh access and refresh tokens
       tags:
       - auth
@@ -266,6 +377,10 @@ paths:
           description: Unauthorized
           schema:
             type: string
+        "404":
+          description: User not found
+          schema:
+            type: string
       summary: Sign in a user
       tags:
       - auth
@@ -294,6 +409,14 @@ paths:
             type: string
         "401":
           description: Unauthorized
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
           schema:
             type: string
       summary: Sign out a user
@@ -521,6 +644,10 @@ paths:
           description: Bad Request
           schema:
             type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
         "500":
           description: Internal Server Error
           schema:
@@ -549,6 +676,10 @@ paths:
             $ref: '#/definitions/response.GetClient'
         "400":
           description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
           schema:
             type: string
         "500":
@@ -584,6 +715,10 @@ paths:
             type: string
         "400":
           description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
           schema:
             type: string
         "500":
@@ -629,6 +764,462 @@ paths:
       summary: Modify the balance of a client by ID
       tags:
       - clients
+  /api/ingredient-categories:
+    get:
+      consumes:
+      - application/json
+      description: Get all ingredient categories available
+      operationId: get-all-ingredient-categories
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            items:
+              $ref: '#/definitions/response.GetIngredientCategory'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get all ingredient categories
+      tags:
+      - ingredient_categories
+    post:
+      consumes:
+      - application/json
+      description: This endpoint allows you to create a new ingredient category.
+      operationId: create-ingredient-category
+      parameters:
+      - description: Create PurchasedIngredient Category
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateIngredientCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a new ingredient category
+      tags:
+      - ingredient_categories
+  /api/ingredient-categories/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete the existing ingredient category with the provided ID
+      parameters:
+      - description: PurchasedIngredient category ID
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete the existing ingredient category
+      tags:
+      - ingredient_categories
+    get:
+      consumes:
+      - application/json
+      description: Get an ingredient category based on ID
+      operationId: get-ingredient-category-by-id
+      parameters:
+      - description: PurchasedIngredient category ID
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: '#/definitions/response.GetIngredientCategory'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get an ingredient category by ID
+      tags:
+      - ingredient_categories
+    put:
+      consumes:
+      - application/json
+      description: Update the existing ingredient category with the provided JSON
+        input
+      parameters:
+      - description: PurchasedIngredient category ID
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: PurchasedIngredient category object to be updated
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateIngredientCategory'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Update the existing ingredient category
+      tags:
+      - ingredient_categories
+  /api/ingredients:
+    get:
+      consumes:
+      - application/json
+      description: Get all ingredients available
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            items:
+              $ref: '#/definitions/response.GetIngredient'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get all ingredients
+      tags:
+      - ingredients
+    post:
+      consumes:
+      - application/json
+      description: This endpoint allows you to create a new ingredient. Quantity,
+        UnitPrice, LackLimit, PurchaseDate, ExpirationDate are optional.
+      parameters:
+      - description: Create PurchasedIngredient
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateIngredient'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: integer
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a new ingredient
+      tags:
+      - ingredients
+  /api/ingredients/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete the existing ingredient with the provided ID
+      parameters:
+      - description: PurchasedIngredient ID
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Delete the existing ingredient
+      tags:
+      - ingredients
+    get:
+      consumes:
+      - application/json
+      description: Get an ingredient based on ID
+      parameters:
+      - description: PurchasedIngredient ID
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: '#/definitions/response.GetIngredient'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get an ingredient by ID
+      tags:
+      - ingredients
+    put:
+      consumes:
+      - application/json
+      description: Update the existing ingredient with the provided JSON input
+      parameters:
+      - description: PurchasedIngredient ID
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: PurchasedIngredient object to be updated
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateIngredient'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Invalid input JSON
+          schema:
+            type: string
+        "404":
+          description: PurchasedIngredient not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Update the existing ingredient
+      tags:
+      - ingredients
+  /api/suppliers:
+    get:
+      description: Get all suppliers
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            items:
+              $ref: '#/definitions/response.GetSupplier'
+            type: array
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get all suppliers
+      tags:
+      - suppliers
+    post:
+      consumes:
+      - application/json
+      description: Create a supplier with the provided JSON input
+      parameters:
+      - description: Supplier creation object
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateSupplier'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Successful response
+          schema:
+            $ref: '#/definitions/request.CreateSupplier'
+        "400":
+          description: Invalid input JSON
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Create a supplier
+      tags:
+      - suppliers
+  /api/suppliers/{id}:
+    delete:
+      description: Delete a supplier
+      parameters:
+      - description: Supplier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            type: string
+        "400":
+          description: Invalid supplier id
+          schema:
+            type: string
+        "404":
+          description: Supplier not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Delete a supplier
+      tags:
+      - suppliers
+    get:
+      description: Get a supplier by id
+      parameters:
+      - description: Supplier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: '#/definitions/response.GetSupplier'
+        "400":
+          description: Invalid supplier id
+          schema:
+            type: string
+        "404":
+          description: Supplier not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get a supplier by id
+      tags:
+      - suppliers
+    put:
+      consumes:
+      - application/json
+      description: Update a supplier with the provided JSON input
+      parameters:
+      - description: Supplier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Supplier update object
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateSupplier'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            type: string
+        "400":
+          description: Invalid input JSON
+          schema:
+            type: string
+        "404":
+          description: Supplier not found
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Update a supplier
+      tags:
+      - suppliers
   /api/users:
     get:
       consumes:
@@ -649,7 +1240,7 @@ paths:
           schema:
             type: string
         "500":
-          description: Internal Server Error
+          description: Internal server error
           schema:
             type: string
       summary: Get all users
@@ -670,15 +1261,15 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successful response
           schema:
             type: integer
         "400":
-          description: Bad Request
+          description: Invalid input JSON
           schema:
             type: string
         "500":
-          description: Internal Server Error
+          description: Internal server error
           schema:
             type: string
       summary: Create a new user
@@ -701,15 +1292,19 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: User deleted
           schema:
             type: string
         "400":
-          description: Bad Request
+          description: Invalid user id
+          schema:
+            type: string
+        "404":
+          description: User not found
           schema:
             type: string
         "500":
-          description: Internal Server Error
+          description: Internal server error
           schema:
             type: string
       summary: Delete a user by ID
@@ -735,11 +1330,15 @@ paths:
           schema:
             $ref: '#/definitions/response.GetUser'
         "400":
-          description: Bad Request
+          description: Invalid user id
+          schema:
+            type: string
+        "404":
+          description: User not found
           schema:
             type: string
         "500":
-          description: Internal Server Error
+          description: Internal server error
           schema:
             type: string
       summary: Get a user by ID
@@ -766,15 +1365,19 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: User updated
           schema:
             type: string
         "400":
-          description: Bad Request
+          description: Invalid input JSON
+          schema:
+            type: string
+        "404":
+          description: User not found
           schema:
             type: string
         "500":
-          description: Internal Server Error
+          description: Internal server error
           schema:
             type: string
       summary: Update the existing user

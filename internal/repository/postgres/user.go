@@ -44,8 +44,8 @@ func (r *UserPostgres) GetUserByID(id uint) (*models.User, error) {
 	return &user, nil
 }
 
-func (r *UserPostgres) UpdateUser(id uint, user *models.User) error {
-	result := r.db.Table(constants.UserTableName).Model(&models.User{}).Where("user_id = ?", id).Updates(user)
+func (r *UserPostgres) UpdateUser(user *models.User) error {
+	result := r.db.Table(constants.UserTableName).Model(&models.User{}).Where("user_id = ?", user.ID).Updates(user)
 	if result.Error != nil {
 		return result.Error
 	} else if result.RowsAffected == 0 {

@@ -4,7 +4,7 @@ import (
 	"Canteen-Backend/internal/delivery/dto/request"
 	"Canteen-Backend/internal/delivery/dto/response"
 	"Canteen-Backend/internal/usecase"
-	"Canteen-Backend/pkg/validators"
+	"Canteen-Backend/pkg/validator"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -12,15 +12,27 @@ import (
 
 func (h *Handler) initClientRoutes(api *gin.RouterGroup) {
 
-	clients := api.Group("/clients")
+	api.Use(h.authenticateUser)
 	{
-		clients.POST("/", h.clientHandler.CreateClient)
-		clients.GET("/", h.clientHandler.GetAllClients)
-		clients.GET("/:id", h.clientHandler.GetClientByID)
-		clients.PUT("/:id", h.clientHandler.UpdateClient)
-		clients.DELETE("/:id", h.clientHandler.DeleteClient)
+		clients := api.Group("/clients")
+		{
+			clients.POST("/", h.clientHandler.CreateClient)
+			clients.GET("/", h.clientHandler.GetAllClients)
+			clients.GET("/:id", h.clientHandler.GetClientByID)
+			clients.PUT("/:id", h.clientHandler.UpdateClient)
+			clients.DELETE("/:id", h.clientHandler.DeleteClient)
 
-		clients.PUT("/:id/modify-balance", h.clientHandler.ModifyBalanceByClientID)
+			clients.PUT("/:id/modify-balance", h.clientHandler.ModifyBalanceByClientID)
+		}
+
+		clientCategories := api.Group("/client-categories")
+		{
+			clientCategories.POST("/", h.clientHandler.CreateClientCategory)
+			clientCategories.GET("/", h.clientHandler.GetAllClientCategories)
+			clientCategories.GET("/:id", h.clientHandler.GetClientCategoryByID)
+			clientCategories.PUT("/:id", h.clientHandler.UpdateClientCategory)
+			clientCategories.DELETE("/:id", h.clientHandler.DeleteClientCategory)
+		}
 	}
 }
 
@@ -50,8 +62,8 @@ func (h *ClientHandler) CreateClient(c *gin.Context) {
 		return
 	}
 
-	if err := validators.ValidatePayload(input); err != nil {
-		NewErrorResponse(c, http.StatusBadRequest, err.Error(), nil, nil)
+	if err := validator.ValidatePayload(input); err != nil {
+		NewErrorResponse(c, http.StatusBadRequest, err.Error(), err, nil)
 		return
 	}
 
@@ -77,7 +89,8 @@ func (h *ClientHandler) CreateClient(c *gin.Context) {
 // @Failure 500 {string} string
 // @Router /api/clients [get]
 func (h *ClientHandler) GetAllClients(c *gin.Context) {
-	clients, err := h.clientUseCase.GetAllClients()
+	clientCategoryName := c.Query("category")
+	clients, err := h.clientUseCase.GetAllClients(clientCategoryName)
 	if err != nil {
 		NewErrorResponse(c, err.StatusCode, err.Message, err.Error, nil)
 		return
@@ -99,6 +112,7 @@ func (h *ClientHandler) GetAllClients(c *gin.Context) {
 // @Param id path int true "Client ID" Format(int64)
 // @Success 200 {object} response.GetClient "Successful response"
 // @Failure 400 {string} string
+// @Failure 404 {string} string
 // @Failure 500 {string} string
 // @Router /api/clients/{id} [get]
 func (h *ClientHandler) GetClientByID(c *gin.Context) {
@@ -128,6 +142,7 @@ func (h *ClientHandler) GetClientByID(c *gin.Context) {
 // @Param input body request.UpdateClient true "Client object to be updated"
 // @Success 200 {string} string
 // @Failure 400 {string} string
+// @Failure 404 {string} string
 // @Failure 500 {string} string
 // @Router /api/clients/{id} [put]
 func (h *ClientHandler) UpdateClient(c *gin.Context) {
@@ -143,12 +158,14 @@ func (h *ClientHandler) UpdateClient(c *gin.Context) {
 		return
 	}
 
-	if err := validators.ValidatePayload(input); err != nil {
-		NewErrorResponse(c, http.StatusBadRequest, err.Error(), nil, gin.H{"id": id})
+	if err := validator.ValidatePayload(input); err != nil {
+		NewErrorResponse(c, http.StatusBadRequest, err.Error(), err, gin.H{"id": id})
 		return
 	}
 
-	customErr := h.clientUseCase.UpdateClient(uint(id), request.MapUpdateClientToClient(input))
+	client := request.MapUpdateClientToClient(input)
+	client.ID = uint(id)
+	customErr := h.clientUseCase.UpdateClient(client)
 	if customErr != nil {
 		NewErrorResponse(c, customErr.StatusCode, customErr.Message, customErr.Error, gin.H{"id": id})
 		return
@@ -167,6 +184,7 @@ func (h *ClientHandler) UpdateClient(c *gin.Context) {
 // @Param id path int true "Client ID" Format(int64)
 // @Success 200 {string} string
 // @Failure 400 {string} string
+// @Failure 404 {string} string
 // @Failure 500 {string} string
 // @Router /api/clients/{id} [delete]
 func (h *ClientHandler) DeleteClient(c *gin.Context) {
@@ -210,8 +228,8 @@ func (h *ClientHandler) ModifyBalanceByClientID(c *gin.Context) {
 		return
 	}
 
-	if err := validators.ValidatePayload(input); err != nil {
-		NewErrorResponse(c, http.StatusBadRequest, err.Error(), nil, nil)
+	if err := validator.ValidatePayload(input); err != nil {
+		NewErrorResponse(c, http.StatusBadRequest, err.Error(), err, nil)
 		return
 	}
 
@@ -222,4 +240,159 @@ func (h *ClientHandler) ModifyBalanceByClientID(c *gin.Context) {
 	}
 
 	NewSuccessResponse(c, http.StatusOK, "money withdrawn from client", nil)
+}
+
+// CreateClientCategory godoc
+// @Summary Create a new client category
+// @Description Create a new client category with the provided JSON input
+// @Tags client_categories
+// @Accept json
+// @Produce json
+// @Param input body request.CreateClientCategory true "Client category object to be created"
+// @Success 200 {integer} integer 1
+// @Failure 400 {string} string
+// @Failure 500 {string} string
+// @Router /api/client-categories [post]
+func (h *ClientHandler) CreateClientCategory(c *gin.Context) {
+	var input *request.CreateClientCategory
+	if err := c.BindJSON(&input); err != nil {
+		NewErrorResponse(c, http.StatusBadRequest, "invalid input JSON", err, nil)
+		return
+	}
+
+	if err := validator.ValidatePayload(input); err != nil {
+		NewErrorResponse(c, http.StatusBadRequest, err.Error(), nil, nil)
+		return
+	}
+
+	id, err := h.clientUseCase.CreateClientCategory(request.MapCreateClientCategoryToClientCategory(input))
+	if err != nil {
+		NewErrorResponse(c, err.StatusCode, err.Message, err.Error, nil)
+		return
+	}
+
+	NewSuccessResponse(c, http.StatusOK, "client category created", gin.H{"id": id})
+
+}
+
+// GetAllClientCategories godoc
+// @Summary Get all client categories
+// @Description Get all client categories available
+// @ID get-all-client-categories
+// @Tags client_categories
+// @Accept json
+// @Produce json
+// @Success 200 {array} response.GetClientCategory "Successful response"
+// @Failure 500 {string} string
+// @Router /api/client-categories [get]
+func (h *ClientHandler) GetAllClientCategories(c *gin.Context) {
+	clientCategories, err := h.clientUseCase.GetAllClientCategories()
+	if err != nil {
+		NewErrorResponse(c, err.StatusCode, err.Message, err.Error, nil)
+		return
+	}
+
+	data := make([]*response.GetClientCategory, len(*clientCategories))
+	for i, clientCategory := range *clientCategories {
+		data[i] = response.MapClientCategoryToGetClientCategory(&clientCategory)
+	}
+	NewSuccessResponse(c, http.StatusOK, "client categories retrieved", data)
+}
+
+// GetClientCategoryByID godoc
+// @Summary Get a client category by ID
+// @Description Get a client category based on ID
+// @ID get-client-category-by-id
+// @Tags client_categories
+// @Accept json
+// @Produce json
+// @Param id path int true "Client category ID" Format(int64)
+// @Success 200 {object} response.GetClientCategory "Successful response"
+// @Failure 400 {string} string
+// @Failure 500 {string} string
+// @Router /api/client-categories/{id} [get]
+func (h *ClientHandler) GetClientCategoryByID(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		NewErrorResponse(c, http.StatusBadRequest, "invalid id", err, nil)
+		return
+	}
+
+	clientCategory, customErr := h.clientUseCase.GetClientCategoryByID(uint(id))
+	if err != nil {
+		NewErrorResponse(c, customErr.StatusCode, customErr.Message, customErr.Error, nil)
+		return
+	}
+
+	NewSuccessResponse(c, http.StatusOK, "client category retrieved", response.MapClientCategoryToGetClientCategory(clientCategory))
+}
+
+// UpdateClientCategory godoc
+// @Summary Update the existing client category
+// @Description Update the existing client category with the provided JSON input
+// @Tags client_categories
+// @Accept json
+// @Produce json
+// @Param id path int true "Client category ID" Format(int64)
+// @Param input body request.UpdateClientCategory true "Client category object to be updated"
+// @Success 200 {string} string
+// @Failure 400 {string} string
+// @Failure 500 {string} string
+// @Router /api/client-categories/{id} [put]
+func (h *ClientHandler) UpdateClientCategory(c *gin.Context) {
+	var input *request.UpdateClientCategory
+	if err := c.BindJSON(&input); err != nil {
+		NewErrorResponse(c, http.StatusBadRequest, "invalid input JSON", err, nil)
+		return
+	}
+
+	if err := validator.ValidatePayload(input); err != nil {
+		NewErrorResponse(c, http.StatusBadRequest, err.Error(), nil, nil)
+		return
+	}
+
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		NewErrorResponse(c, http.StatusBadRequest, "invalid id", err, nil)
+		return
+	}
+
+	clientCategory := request.MapUpdateClientCategoryToClientCategory(input)
+	clientCategory.ID = uint(id)
+
+	customErr := h.clientUseCase.UpdateClientCategory(clientCategory)
+	if customErr != nil {
+		NewErrorResponse(c, customErr.StatusCode, customErr.Message, customErr.Error, nil)
+		return
+	}
+
+	NewSuccessResponse(c, http.StatusOK, "client category updated", nil)
+}
+
+// DeleteClientCategory godoc
+// @Summary Delete a client category by ID
+// @Description Delete a client category based on ID
+// @ID delete-client-category
+// @Tags client_categories
+// @Accept json
+// @Produce json
+// @Param id path int true "Client category ID" Format(int64)
+// @Success 200 {string} string
+// @Failure 400 {string} string
+// @Failure 500 {string} string
+// @Router /api/client-categories/{id} [delete]
+func (h *ClientHandler) DeleteClientCategory(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		NewErrorResponse(c, http.StatusBadRequest, "invalid id", err, nil)
+		return
+	}
+
+	customErr := h.clientUseCase.DeleteClientCategory(uint(id))
+	if customErr != nil {
+		NewErrorResponse(c, customErr.StatusCode, customErr.Message, customErr.Error, nil)
+		return
+	}
+
+	NewSuccessResponse(c, http.StatusOK, "client category deleted", nil)
 }

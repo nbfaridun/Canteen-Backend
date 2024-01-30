@@ -8,16 +8,19 @@ import (
 )
 
 type Handler struct {
-	userHandler           *UserHandler
-	clientHandler         *ClientHandler
-	clientCategoryHandler *ClientCategoryHandler
+	userHandler       *UserHandler
+	clientHandler     *ClientHandler
+	ingredientHandler *IngredientHandler
+	purchaseHandler   *PurchaseHandler
 }
 
 func NewHandler(useCase *usecase.UseCase) *Handler {
 	userHandler := NewUserHandler(useCase.User)
 	clientHandler := NewClientHandler(useCase.Client)
-	clientCategoryHandler := NewClientCategoryHandler(useCase.ClientCategory)
-	return &Handler{userHandler: userHandler, clientHandler: clientHandler, clientCategoryHandler: clientCategoryHandler}
+	ingredientHandler := NewIngredientHandler(useCase.Ingredient)
+	purchaseHandler := NewPurchaseHandler(useCase.Purchase)
+
+	return &Handler{userHandler: userHandler, clientHandler: clientHandler, ingredientHandler: ingredientHandler, purchaseHandler: purchaseHandler}
 }
 
 func (h *Handler) InitRoutes() *gin.Engine {
@@ -29,6 +32,8 @@ func (h *Handler) InitRoutes() *gin.Engine {
 	{
 		h.initUserRoutes(api)
 		h.initClientRoutes(api)
+		h.initIngredientRoutes(api)
+		h.initPurchaseRoutes(api)
 	}
 
 	return router

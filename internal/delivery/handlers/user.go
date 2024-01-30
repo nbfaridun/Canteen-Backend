@@ -6,7 +6,7 @@ import (
 	"Canteen-Backend/internal/delivery/dto/response"
 	"Canteen-Backend/internal/models"
 	"Canteen-Backend/internal/usecase"
-	"Canteen-Backend/pkg/validators"
+	"Canteen-Backend/pkg/validator"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -52,6 +52,7 @@ func NewUserHandler(userUseCase usecase.User) *UserHandler {
 // @Success 200 {object} models.Token "Successful response"
 // @Failure 400 {string} string "Invalid input JSON"
 // @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {string} string "User not found"
 // @Router /api/auth/sign-in [post]
 func (h *UserHandler) SignIn(c *gin.Context) {
 	var input *request.SignIn
@@ -60,7 +61,7 @@ func (h *UserHandler) SignIn(c *gin.Context) {
 		return
 	}
 
-	if err := validators.ValidatePayload(input); err != nil {
+	if err := validator.ValidatePayload(input); err != nil {
 		NewErrorResponse(c, http.StatusBadRequest, err.Error(), nil, nil)
 		return
 	}
@@ -84,6 +85,8 @@ func (h *UserHandler) SignIn(c *gin.Context) {
 // @Success 200 {string} string "User signed out"
 // @Failure 400 {string} string "Invalid input JSON"
 // @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {string} string
+// @Failure 500 {string} string "Internal server error"
 // @Router /api/auth/sign-out [post]
 func (h *UserHandler) SignOut(c *gin.Context) {
 	var input *request.RefreshToken
@@ -92,7 +95,7 @@ func (h *UserHandler) SignOut(c *gin.Context) {
 		return
 	}
 
-	if err := validators.ValidatePayload(input); err != nil {
+	if err := validator.ValidatePayload(input); err != nil {
 		NewErrorResponse(c, http.StatusBadRequest, err.Error(), nil, nil)
 		return
 	}
@@ -115,6 +118,8 @@ func (h *UserHandler) SignOut(c *gin.Context) {
 // @Success 200 {object} models.Token "Successful response"
 // @Failure 400 {string} string "Invalid input JSON"
 // @Failure 401 {string} string "Unauthorized"
+// @Failure 404 {string} string
+// @Failure 500 {string} string "Internal server error"
 // @Router /api/auth/refresh-token [post]
 func (h *UserHandler) RefreshToken(c *gin.Context) {
 	var input *request.RefreshToken
@@ -123,7 +128,7 @@ func (h *UserHandler) RefreshToken(c *gin.Context) {
 		return
 	}
 
-	if err := validators.ValidatePayload(input); err != nil {
+	if err := validator.ValidatePayload(input); err != nil {
 		NewErrorResponse(c, http.StatusBadRequest, err.Error(), nil, nil)
 		return
 	}
@@ -144,9 +149,9 @@ func (h *UserHandler) RefreshToken(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param input body request.CreateUser true "User object to be created"
-// @Success 200 {integer} integer 1
-// @Failure 400 {string} string
-// @Failure 500 {string} string
+// @Success 200 {integer} integer 1 "Successful response"
+// @Failure 400 {string} string "Invalid input JSON"
+// @Failure 500 {string} string "Internal server error"
 // @Router /api/users [post]
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	var input *request.CreateUser
@@ -155,7 +160,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 		return
 	}
 
-	if err := validators.ValidatePayload(input); err != nil {
+	if err := validator.ValidatePayload(input); err != nil {
 		NewErrorResponse(c, http.StatusBadRequest, err.Error(), nil, nil)
 		return
 	}
@@ -179,8 +184,8 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Success 200 {array} response.GetUser "Successful response"
-// @Failure 401 {string} string
-// @Failure 500 {string} string
+// @Failure 401 {string} string "Unauthorized"
+// @Failure 500 {string} string "Internal server error"
 // @Router /api/users [get]
 func (h *UserHandler) GetAllUsers(c *gin.Context) {
 	var users *[]models.User
@@ -205,8 +210,9 @@ func (h *UserHandler) GetAllUsers(c *gin.Context) {
 // @Produce json
 // @Param id path int true "User ID" Format(int64)
 // @Success 200 {object} response.GetUser "Successful response"
-// @Failure 400 {string} string
-// @Failure 500 {string} string
+// @Failure 400 {string} string "Invalid user id"
+// @Failure 404 {string} string "User not found"
+// @Failure 500 {string} string "Internal server error"
 // @Router /api/users/{id} [get]
 func (h *UserHandler) GetUserByID(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
@@ -232,14 +238,20 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
 // @Produce json
 // @Param id path int true "User ID" Format(int64)
 // @Param input body request.UpdateUser true "User object to be updated"
-// @Success 200 {string} string
-// @Failure 400 {string} string
-// @Failure 500 {string} string
+// @Success 200 {string} string "User updated"
+// @Failure 400 {string} string "Invalid input JSON"
+// @Failure 404 {string} string "User not found"
+// @Failure 500 {string} string "Internal server error"
 // @Router /api/users/{id} [put]
 func (h *UserHandler) UpdateUser(c *gin.Context) {
 	var input *request.UpdateUser
 	if err := c.BindJSON(&input); err != nil {
 		NewErrorResponse(c, http.StatusBadRequest, "invalid input JSON", err, nil)
+		return
+	}
+
+	if err := validator.ValidatePayload(input); err != nil {
+		NewErrorResponse(c, http.StatusBadRequest, err.Error(), nil, nil)
 		return
 	}
 
@@ -249,12 +261,10 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	if err := validators.ValidatePayload(input); err != nil {
-		NewErrorResponse(c, http.StatusBadRequest, err.Error(), nil, nil)
-		return
-	}
+	user := request.MapUpdateUserToUser(input)
+	user.ID = uint(id)
 
-	customErr := h.userUseCase.UpdateUser(uint(id), request.MapUpdateUserToUser(input))
+	customErr := h.userUseCase.UpdateUser(user)
 	if customErr != nil {
 		NewErrorResponse(c, customErr.StatusCode, customErr.Message, customErr.Error, gin.H{"id": id})
 		return
@@ -271,9 +281,10 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "User ID" Format(int64)
-// @Success 200 {string} string
-// @Failure 400 {string} string
-// @Failure 500 {string} string
+// @Success 200 {string} string "User deleted"
+// @Failure 400 {string} string "Invalid user id"
+// @Failure 404 {string} string "User not found"
+// @Failure 500 {string} string "Internal server error"
 // @Router /api/users/{id} [delete]
 func (h *UserHandler) DeleteUser(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
