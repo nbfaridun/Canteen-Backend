@@ -8,10 +8,11 @@ import (
 	"time"
 )
 
-// todo add env variables for durations
-var jwtKey = os.Getenv("SIGNING_KEY")
-var accessTokenDuration = 2 * time.Minute
-var refreshTokenDuration = 10 * time.Minute
+var (
+	jwtKey                     string
+	accessTokenDurationString  string
+	refreshTokenDurationString string
+)
 
 type jwtClaims struct {
 	UserID     uint `json:"user_id"`
@@ -21,6 +22,11 @@ type jwtClaims struct {
 
 func GenerateAccessToken(userID, roleID uint) (string, error) {
 	// converting string to time.Duration
+	accessTokenDurationString = os.Getenv("ACCESS_TOKEN_DURATION")
+	accessTokenDuration, err := time.ParseDuration(accessTokenDurationString)
+	if err != nil {
+		return "", err
+	}
 	expirationTime := time.Now().Add(accessTokenDuration)
 
 	claims := &jwtClaims{
@@ -33,6 +39,7 @@ func GenerateAccessToken(userID, roleID uint) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
+	jwtKey = os.Getenv("JWT_KEY")
 	tokenString, err := token.SignedString([]byte(jwtKey))
 	if err != nil {
 		return "", err
@@ -50,7 +57,11 @@ func GenerateRefreshToken() (string, time.Time, error) {
 	if _, err := r.Read(b); err != nil {
 		return "", time.Time{}, err
 	}
-
+	refreshTokenDurationString = os.Getenv("REFRESH_TOKEN_DURATION")
+	refreshTokenDuration, err := time.ParseDuration(refreshTokenDurationString)
+	if err != nil {
+		return "", time.Time{}, err
+	}
 	return fmt.Sprintf("%x", b), time.Now().Add(refreshTokenDuration), nil
 }
 
@@ -59,7 +70,7 @@ func ParseToken(accessToken string) (uint, uint, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-
+		jwtKey = os.Getenv("JWT_KEY")
 		return []byte(jwtKey), nil
 	})
 	if err != nil {

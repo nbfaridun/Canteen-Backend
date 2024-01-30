@@ -14,6 +14,11 @@ type GetClient struct {
 	IsActive         bool    `json:"is_active"`
 }
 
+type GetClientCategory struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}
+
 func MapClientToGetClient(client *models.Client) *GetClient {
 	return &GetClient{
 		ID:               client.ID,
@@ -25,5 +30,12 @@ func MapClientToGetClient(client *models.Client) *GetClient {
 		ClientCategoryID: client.ClientCategoryID,
 		Balance:          client.Balance,
 		IsActive:         client.IsActive,
+	}
+}
+
+func MapClientCategoryToGetClientCategory(clientCategory *models.ClientCategory) *GetClientCategory {
+	return &GetClientCategory{
+		ID:   clientCategory.ID,
+		Name: clientCategory.Name,
 	}
 }

@@ -27,6 +27,14 @@ func RunSeeds(db *gorm.DB) error {
 		return err
 	}
 
+	if err := seedIfNotExists(db, "ingredient_category", "name", "vegetables"); err != nil {
+		return err
+	}
+
+	if err := seedIfNotExists(db, "supplier", "name", "supplier1"); err != nil {
+		return err
+	}
+
 	if err := createAdmin(db); err != nil {
 		return err
 	}

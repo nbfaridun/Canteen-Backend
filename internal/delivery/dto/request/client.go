@@ -27,6 +27,15 @@ type ModifyBalance struct {
 	Difference float32 `json:"difference" validate:"required"`
 }
 
+type CreateClientCategory struct {
+	Name string `json:"name" validate:"required,min=1,max=20,alpha"`
+}
+
+type UpdateClientCategory struct {
+	Name     string `json:"name" validate:"omitempty,min=1,max=20,alpha"`
+	IsActive bool   `json:"is_active"`
+}
+
 func MapCreateClientToClient(input *CreateClient) *models.Client {
 	return &models.Client{
 		Email:            input.Email,
@@ -50,5 +59,19 @@ func MapUpdateClientToClient(input *UpdateClient) *models.Client {
 		ClientCategoryID: input.ClientCategoryID,
 		Balance:          input.Balance,
 		IsActive:         input.IsActive,
+	}
+}
+
+func MapCreateClientCategoryToClientCategory(input *CreateClientCategory) *models.ClientCategory {
+	return &models.ClientCategory{
+		Name:     input.Name,
+		IsActive: true,
+	}
+}
+
+func MapUpdateClientCategoryToClientCategory(input *UpdateClientCategory) *models.ClientCategory {
+	return &models.ClientCategory{
+		Name:     input.Name,
+		IsActive: input.IsActive,
 	}
 }

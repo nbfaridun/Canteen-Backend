@@ -29,6 +29,10 @@ func (r *SessionPostgres) DeleteSession(session *models.Session) error {
 		return result.Error
 	}
 
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+
 	return nil
 }
 
